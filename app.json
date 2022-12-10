@@ -19,7 +19,8 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.sheranthaperera.dailyfitness"
     },
     "android": {
       "adaptiveIcon": {
@@ -30,6 +31,12 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "66e39fe6-2209-4dd8-affc-cc1e7a4aaa60"
+      }
+    },
+    "owner": "sheranthaperera"
   }
 }

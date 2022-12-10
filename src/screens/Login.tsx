@@ -1,10 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Platform, TouchableWithoutFeedback } from 'react-native';
+import { Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/core';
 
 import { useData, useTheme, useTranslation } from '../hooks';
 import * as regex from '../constants/regex';
-import { Block, Button, Input, Image, Text, Checkbox } from '../components';
+import { Block, Button, Input, Image, Text } from '../components';
+
+import * as Google from 'expo-auth-session/providers/google';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -31,6 +33,13 @@ const Login = () => {
   });
   const { assets, colors, gradients, sizes } = useTheme();
 
+  const [_, __, googlePromptAsync] = Google.useAuthRequest({
+    expoClientId: '1047292934936-7d0n02vrd8ielmad8huiseu8r5bvcnd5.apps.googleusercontent.com',
+    iosClientId: 'GOOGLE_GUID.apps.googleusercontent.com',
+    androidClientId: 'GOOGLE_GUID.apps.googleusercontent.com',
+    webClientId: 'GOOGLE_GUID.apps.googleusercontent.com',
+  });
+
   const handleChange = useCallback(
     (value) => {
       setRegistration((state) => ({ ...state, ...value }));
@@ -53,13 +62,14 @@ const Login = () => {
     }));
   }, [registration, setIsValid]);
 
-  const handleSocialLogin = (provider: string) => {
-    console.log("Going with social login -> ", provider);
-    switch (provider) {
-      case "google": 
-        break;
+  const googleRegister = async () => {
+    const response = await googlePromptAsync();
+    if (response.type === "success") {
+      const { access_token } = response.params;
+      console.log("Access Token is ", access_token);
+      // Send access token to backend and process response and init auth
     }
-  };
+  }
 
   return (
     <Block safe marginTop={sizes.md}>
@@ -118,7 +128,7 @@ const Login = () => {
                       color={isDark ? colors.icon : undefined}
                     />
                 </Button> */}
-                <Button outlined gray shadow={!isAndroid} onPress = {() => handleSocialLogin("google")}>
+                <Button outlined gray shadow={!isAndroid} onPress={() => googleRegister()}>
                   <Image
                     source={assets.google}
                     height={sizes.m}
