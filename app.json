@@ -12,6 +12,7 @@
       "resizeMode": "cover",
       "backgroundColor": "#CB0C9F"
     },
+    "scheme": "daily-fitness",
     "updates": {
       "fallbackToCacheTimeout": 0
     },
