@@ -1,62 +1,126 @@
-import React, {useCallback, useEffect, useState} from 'react';
-import {Linking, Platform} from 'react-native';
-import {useNavigation} from '@react-navigation/core';
-
-import {useData, useTheme, useTranslation} from '../hooks/';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Linking, Platform } from 'react-native';
+import { useNavigation } from '@react-navigation/core';
+import Toast from 'react-native-toast-message';
+import { useData, useTheme, useTranslation } from '../hooks/';
 import * as regex from '../constants/regex';
-import {Block, Button, Input, Image, Text, Checkbox} from '../components/';
+import { Block, Button, Input, Image, Text, Checkbox, OverlaySpinner } from '../components/';
+import { registerUser } from "../services/authentication";
+import * as Google from 'expo-auth-session/providers/google';
+import { googleUserInfo } from "../services/authentication";
 
 const isAndroid = Platform.OS === 'android';
 
 interface IRegistration {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   password: string;
   agreed: boolean;
 }
 interface IRegistrationValidation {
-  name: boolean;
+  firstName: boolean;
+  lastName: boolean;
   email: boolean;
   password: boolean;
   agreed: boolean;
 }
 
 const Register = () => {
-  const {isDark} = useData();
-  const {t} = useTranslation();
+  const { isDark, handleUser } = useData();
+  const { t } = useTranslation();
+  const [isLoading, setLoadingState] = useState(false);
   const navigation = useNavigation();
+  const [_, __, googlePromptAsync] = Google.useAuthRequest({
+    expoClientId: '1047292934936-7d0n02vrd8ielmad8huiseu8r5bvcnd5.apps.googleusercontent.com',
+    // iosClientId: 'GOOGLE_GUID.apps.googleusercontent.com',
+    // androidClientId: 'GOOGLE_GUID.apps.googleusercontent.com',
+    // webClientId: 'GOOGLE_GUID.apps.googleusercontent.com',
+  });
+
+  const { assets, colors, gradients, sizes } = useTheme();
+
+  // Validation for user registaration
   const [isValid, setIsValid] = useState<IRegistrationValidation>({
-    name: false,
+    firstName: false,
+    lastName: false,
     email: false,
     password: false,
     agreed: false,
   });
+
+  // User registration form
   const [registration, setRegistration] = useState<IRegistration>({
-    name: '',
+    firstName: '',
+    lastName: '',
     email: '',
     password: '',
     agreed: false,
   });
-  const {assets, colors, gradients, sizes} = useTheme();
 
+  // Handle form changes
   const handleChange = useCallback(
     (value) => {
-      setRegistration((state) => ({...state, ...value}));
+      setRegistration((state) => ({ ...state, ...value }));
     },
     [setRegistration],
   );
 
-  const handleSignUp = useCallback(() => {
+  // Handle signup function
+  const handleSignUp = useCallback(async () => {
     if (!Object.values(isValid).includes(false)) {
       /** send/save registratin data */
-      console.log('handleSignUp', registration);
+      setLoadingState(true);
+      const { status, data } = await registerUser(registration.email, registration.firstName,
+        registration.lastName, registration.password);
+      setLoadingState(false);
+      if (status === 'SUCCESS') {
+        navigation.navigate("OTPVerify", { userId: data.user.id })
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: data,
+        });
+      }
     }
   }, [isValid, registration]);
 
+  // Handle google registration
+  const handleGoogleLogin = useCallback(async () => {
+    const response = await googlePromptAsync();
+    setLoadingState(true);
+    if (response.type === "success") {
+      const { access_token } = response.params;
+      const resp = await googleUserInfo(access_token, true) as { status: string, data: any, attribute: string };
+      if (resp.status === 'SUCCESS') {
+        handleUser({
+          id: resp.data.user.id,
+          name: resp.data.user.name,
+          avatar: resp.data.user.pictureUrl,
+          type: resp.data.user.type,
+          role: resp.data.user.role,
+          firstName: resp.data.user.firstName,
+          lastName: resp.data.user.last_name,
+          isEmailVerified: resp.data.user.isEmailVerified,
+          accessToken: resp.data.tokens.access.token,
+          refreshToken: resp.data.tokens.refresh.token
+        });
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: resp.data
+        });
+      }
+    }
+    setLoadingState(false);
+  }, [])
+
+  // Form validations
   useEffect(() => {
     setIsValid((state) => ({
       ...state,
-      name: regex.name.test(registration.name),
+      firstName: regex.name.test(registration.firstName),
+      lastName: regex.name.test(registration.lastName),
       email: regex.email.test(registration.email),
       password: regex.password.test(registration.password),
       agreed: registration.agreed,
@@ -65,8 +129,16 @@ const Register = () => {
 
   return (
     <Block safe marginTop={sizes.md}>
+      <OverlaySpinner
+        isActive={isLoading}
+        textColor={isDark ? 'white' : 'black'}
+        backgroundColor={isDark ? 'black' : 'white'}
+        spinnerSize="large"
+        id='RegisterIndicator'
+        text='Loading...'
+      />
       <Block paddingHorizontal={sizes.s}>
-        <Block flex={0} style={{zIndex: 0}}>
+        <Block flex={0} style={{ zIndex: 0 }}>
           <Image
             background
             resizeMode="cover"
@@ -85,7 +157,7 @@ const Register = () => {
                 height={18}
                 color={colors.white}
                 source={assets.arrow}
-                transform={[{rotate: '180deg'}]}
+                transform={[{ rotate: '180deg' }]}
               />
               <Text p white marginLeft={sizes.s}>
                 {t('common.goBack')}
@@ -122,7 +194,7 @@ const Register = () => {
               </Text>
               {/* social buttons */}
               <Block row center justify="space-evenly" marginVertical={sizes.m}>
-                <Button outlined gray shadow={!isAndroid}>
+                {/* <Button outlined gray shadow={!isAndroid}>
                   <Image
                     source={assets.facebook}
                     height={sizes.m}
@@ -137,8 +209,8 @@ const Register = () => {
                     width={sizes.m}
                     color={isDark ? colors.icon : undefined}
                   />
-                </Button>
-                <Button outlined gray shadow={!isAndroid}>
+                </Button> */}
+                <Button outlined gray shadow={!isAndroid} onPress={handleGoogleLogin}>
                   <Image
                     source={assets.google}
                     height={sizes.m}
@@ -177,23 +249,33 @@ const Register = () => {
               {/* form inputs */}
               <Block paddingHorizontal={sizes.sm}>
                 <Input
-                  autoCapitalize="none"
+                  autoCapitalize="sentences"
                   marginBottom={sizes.m}
-                  label={t('common.name')}
-                  placeholder={t('common.namePlaceholder')}
-                  success={Boolean(registration.name && isValid.name)}
-                  danger={Boolean(registration.name && !isValid.name)}
-                  onChangeText={(value) => handleChange({name: value})}
+                  label={t('common.firstname')}
+                  placeholder={t('common.firstnamePlaceholder')}
+                  success={Boolean(registration.firstName && isValid.firstName)}
+                  danger={Boolean(registration.firstName && !isValid.firstName)}
+                  onChangeText={(value) => handleChange({ firstName: value })}
+                />
+                <Input
+                  autoCapitalize="sentences"
+                  marginBottom={sizes.m}
+                  label={t('common.lastname')}
+                  placeholder={t('common.lastnamePlaceholder')}
+                  success={Boolean(registration.lastName && isValid.lastName)}
+                  danger={Boolean(registration.lastName && !isValid.lastName)}
+                  onChangeText={(value) => handleChange({ lastName: value })}
                 />
                 <Input
                   autoCapitalize="none"
+                  autoComplete='email'
                   marginBottom={sizes.m}
                   label={t('common.email')}
                   keyboardType="email-address"
                   placeholder={t('common.emailPlaceholder')}
                   success={Boolean(registration.email && isValid.email)}
                   danger={Boolean(registration.email && !isValid.email)}
-                  onChangeText={(value) => handleChange({email: value})}
+                  onChangeText={(value) => handleChange({ email: value })}
                 />
                 <Input
                   secureTextEntry
@@ -201,7 +283,7 @@ const Register = () => {
                   marginBottom={sizes.m}
                   label={t('common.password')}
                   placeholder={t('common.passwordPlaceholder')}
-                  onChangeText={(value) => handleChange({password: value})}
+                  onChangeText={(value) => handleChange({ password: value })}
                   success={Boolean(registration.password && isValid.password)}
                   danger={Boolean(registration.password && !isValid.password)}
                 />
@@ -211,14 +293,14 @@ const Register = () => {
                 <Checkbox
                   marginRight={sizes.sm}
                   checked={registration?.agreed}
-                  onPress={(value) => handleChange({agreed: value})}
+                  onPress={(value) => handleChange({ agreed: value })}
                 />
                 <Text paddingRight={sizes.s}>
                   {t('common.agree')}
                   <Text
                     semibold
                     onPress={() => {
-                      Linking.openURL('https://www.creative-tim.com/terms');
+                      Linking.openURL('https://www.google.com/search?q=terms%20of%20service');
                     }}>
                     {t('common.terms')}
                   </Text>
@@ -234,21 +316,11 @@ const Register = () => {
                   {t('common.signup')}
                 </Text>
               </Button>
-              <Button
-                primary
-                outlined
-                shadow={!isAndroid}
-                marginVertical={sizes.s}
-                marginHorizontal={sizes.sm}
-                onPress={() => navigation.navigate('Pro')}>
-                <Text bold primary transform="uppercase">
-                  {t('common.signin')}
-                </Text>
-              </Button>
             </Block>
           </Block>
         </Block>
       </Block>
+      <Toast position='top' />
     </Block>
   );
 };

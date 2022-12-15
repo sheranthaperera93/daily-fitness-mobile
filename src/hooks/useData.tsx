@@ -1,4 +1,4 @@
-import React, {useCallback, useContext, useEffect, useState} from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import Storage from '@react-native-async-storage/async-storage';
 
 import {
@@ -11,21 +11,20 @@ import {
 } from '../constants/types';
 
 import {
-  USERS,
   FOLLOWING,
   TRENDING,
   CATEGORIES,
   ARTICLES,
 } from '../constants/mocks';
-import {light, dark} from '../constants';
+import { light, dark } from '../constants';
 
 export const DataContext = React.createContext({});
 
-export const DataProvider = ({children}: {children: React.ReactNode}) => {
+export const DataProvider = ({ children }: { children: React.ReactNode }) => {
   const [isDark, setIsDark] = useState(false);
   const [theme, setTheme] = useState<ITheme>(light);
-  const [user, setUser] = useState<IUser>(USERS[0]);
-  const [users, setUsers] = useState<IUser[]>(USERS);
+  const [user, setUser] = useState<IUser>();
+  const [users, setUsers] = useState<IUser[]>();
   const [following, setFollowing] = useState<IProduct[]>(FOLLOWING);
   const [trending, setTrending] = useState<IProduct[]>(TRENDING);
   const [categories, setCategories] = useState<ICategory[]>(CATEGORIES);
@@ -59,7 +58,7 @@ export const DataProvider = ({children}: {children: React.ReactNode}) => {
     (payload: IUser[]) => {
       // set users / compare if has updated
       if (JSON.stringify(payload) !== JSON.stringify(users)) {
-        setUsers({...users, ...payload});
+        setUsers({ ...users, ...payload });
       }
     },
     [users, setUsers],
@@ -67,14 +66,33 @@ export const DataProvider = ({children}: {children: React.ReactNode}) => {
 
   // handle user
   const handleUser = useCallback(
-    (payload: IUser) => {
+    async (payload: IUser) => {
       // set user / compare if has updated
-      if (JSON.stringify(payload) !== JSON.stringify(user)) {
-        setUser(payload);
+      if (!payload) {
+        await Storage.removeItem('user');
+        setUser(undefined);
+      } else {
+        if (JSON.stringify(payload) !== JSON.stringify(user)) {
+          await Storage.setItem('user', JSON.stringify(payload))
+          setUser(payload);
+        }
       }
     },
     [user, setUser],
   );
+
+  // get user  from storage
+  const getUser = useCallback(async () => {
+    // get preferance gtom storage
+    const userJSON = await Storage.getItem('user');
+    if (userJSON !== null) {
+      // set isDark / compare if has updated
+      setUser(JSON.parse(userJSON));
+    } else {
+      await Storage.removeItem('user');
+      setUser(undefined);
+    }
+  }, [setUser]);
 
   // handle Article
   const handleArticle = useCallback(
@@ -90,7 +108,8 @@ export const DataProvider = ({children}: {children: React.ReactNode}) => {
   // get initial data for: isDark & language
   useEffect(() => {
     getIsDark();
-  }, [getIsDark]);
+    getUser();
+  }, [getIsDark, getUser]);
 
   // change theme based on isDark updates
   useEffect(() => {

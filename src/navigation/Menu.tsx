@@ -1,5 +1,6 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {Alert, Animated, Linking, StyleSheet} from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Animated, Linking, StyleSheet, View } from 'react-native';
+import { Root, Popup } from 'react-native-popup-confirm-toast'
 
 import {
   useIsDrawerOpen,
@@ -10,14 +11,14 @@ import {
 } from '@react-navigation/drawer';
 
 import Screens from './Screens';
-import {Block, Text, Switch, Button, Image} from '../components';
-import {useData, useTheme, useTranslation} from '../hooks';
+import { Block, Text, Switch, Button, Image } from '../components';
+import { useData, useTheme, useTranslation } from '../hooks';
 
 const Drawer = createDrawerNavigator();
 
 /* drawer menu screens navigation */
 const ScreensStack = () => {
-  const {colors} = useTheme();
+  const { colors } = useTheme();
   const isDrawerOpen = useIsDrawerOpen();
   const animation = useRef(new Animated.Value(0)).current;
 
@@ -33,7 +34,7 @@ const ScreensStack = () => {
 
   const animatedStyle = {
     borderRadius: borderRadius,
-    transform: [{scale: scale}],
+    transform: [{ scale: scale }],
   };
 
   useEffect(() => {
@@ -55,7 +56,6 @@ const ScreensStack = () => {
           borderWidth: isDrawerOpen ? 1 : 0,
         },
       ])}>
-      {/*  */}
       <Screens />
     </Animated.View>
   );
@@ -65,11 +65,11 @@ const ScreensStack = () => {
 const DrawerContent = (
   props: DrawerContentComponentProps<DrawerContentOptions>,
 ) => {
-  const {navigation} = props;
-  const {t} = useTranslation();
-  const {isDark, handleIsDark} = useData();
+  const { navigation } = props;
+  const { t } = useTranslation();
+  const { isDark, handleIsDark, handleUser } = useData();
   const [active, setActive] = useState('Home');
-  const {assets, colors, gradients, sizes} = useTheme();
+  const { assets, colors, gradients, sizes } = useTheme();
   const labelColor = colors.text;
 
   const handleNavigation = useCallback(
@@ -80,20 +80,38 @@ const DrawerContent = (
     [navigation, setActive],
   );
 
-  const handleWebLink = useCallback((url) => Linking.openURL(url), []);
-
   // screen list for Drawer menu
   const screens = [
-    {name: t('screens.home'), to: 'Home', icon: assets.home},
+    { name: t('screens.home'), to: 'Home', icon: assets.home },
     // {name: t('screens.components'), to: 'Components', icon: assets.components},
     // {name: t('screens.articles'), to: 'Articles', icon: assets.document},
     // {name: t('screens.rental'), to: 'Pro', icon: assets.rental},
-    // {name: t('screens.profile'), to: 'Profile', icon: assets.profile},
+    { name: t('screens.profile'), to: 'Profile', icon: assets.profile },
     // {name: t('screens.settings'), to: 'Pro', icon: assets.settings},
-    {name: t('screens.register'), to: 'Register', icon: assets.register},
-    {name: t('screens.login'), to: 'Login', icon: assets.register},
+    // {name: t('screens.register'), to: 'Register', icon: assets.register},
+    // {name: t('screens.login'), to: 'Login', icon: assets.register},
     // {name: t('screens.extra'), to: 'Pro', icon: assets.extras},
   ];
+
+  const handleLogout = () => {
+    Popup.show({
+      type: 'confirm',
+      title: 'Logout Confirmation!',
+      textBody: 'Are you sure you want to logout?',
+      buttonText: 'Confirm',
+      confirmText: 'Cancel',
+      callback: () => {
+        Popup.hide();
+        navigation.closeDrawer();
+        handleUser();
+      },
+      cancelCallback: () => {
+        Popup.hide();
+      },
+    })
+  }
+
+
 
   return (
     <DrawerContentScrollView
@@ -101,7 +119,7 @@ const DrawerContent = (
       scrollEnabled
       removeClippedSubviews
       renderToHardwareTextureAndroid
-      contentContainerStyle={{paddingBottom: sizes.padding}}>
+      contentContainerStyle={{ paddingBottom: sizes.padding }}>
       <Block paddingHorizontal={sizes.padding} color={colors.background}>
         <Block flex={0} row align="center" marginBottom={sizes.l}>
           <Image
@@ -155,26 +173,22 @@ const DrawerContent = (
           );
         })}
 
-        <Block
-          flex={0}
-          height={1}
-          marginRight={sizes.md}
-          marginVertical={sizes.sm}
-          gradient={gradients.menu}
-        />
-
-        <Text semibold transform="uppercase" opacity={0.5}>
-          {t('menu.documentation')}
-        </Text>
+        <Block row justify="space-between" marginTop={sizes.sm}>
+          <Text color={labelColor}>{t('darkMode')}</Text>
+          <Switch
+            checked={isDark}
+            onPress={(checked) => {
+              handleIsDark(checked);
+            }}
+          />
+        </Block>
 
         <Button
           row
           justify="flex-start"
           marginTop={sizes.sm}
           marginBottom={sizes.s}
-          onPress={() =>
-            handleWebLink('https://github.com/creativetimofficial')
-          }>
+          onPress={() => handleLogout()}>
           <Block
             flex={0}
             radius={6}
@@ -189,23 +203,13 @@ const DrawerContent = (
               width={14}
               height={14}
               color={colors.black}
-              source={assets.documentation}
+              source={assets.arrow}
             />
           </Block>
           <Text p color={labelColor}>
-            {t('menu.started')}
+            {t('logout')}
           </Text>
         </Button>
-
-        <Block row justify="space-between" marginTop={sizes.sm}>
-          <Text color={labelColor}>{t('darkMode')}</Text>
-          <Switch
-            checked={isDark}
-            onPress={(checked) => {
-              handleIsDark(checked);
-            }}
-          />
-        </Block>
       </Block>
     </DrawerContentScrollView>
   );
@@ -213,23 +217,25 @@ const DrawerContent = (
 
 /* drawer menu navigation */
 export default () => {
-  const {gradients, colors, } = useTheme();
+  const { gradients, colors, } = useTheme();
 
   return (
-    <Block gradient={gradients.dark}>
-      <Drawer.Navigator
-        drawerType="slide"
-        overlayColor="transparent"
-        sceneContainerStyle={{backgroundColor: colors.background}}
-        drawerContent={(props) => <DrawerContent {...props} />}
-        drawerStyle={{
-          flex: 1,
-          width: '60%',
-          borderRightWidth: 0,
-          backgroundColor: colors.background,
-        }}>
-        <Drawer.Screen name="Screens" component={ScreensStack} />
-      </Drawer.Navigator>
-    </Block>
+    <Root>
+      <Block gradient={gradients.dark}>
+        <Drawer.Navigator
+          drawerType="slide"
+          overlayColor="transparent"
+          sceneContainerStyle={{ backgroundColor: colors.background }}
+          drawerContent={(props) => <DrawerContent {...props} />}
+          drawerStyle={{
+            flex: 1,
+            width: '60%',
+            borderRightWidth: 0,
+            backgroundColor: colors.background,
+          }}>
+          <Drawer.Screen name="Screens" component={ScreensStack} />
+        </Drawer.Navigator>
+      </Block>
+    </Root>
   );
 };

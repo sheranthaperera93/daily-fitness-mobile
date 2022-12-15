@@ -38,7 +38,7 @@ const Profile = () => {
   );
 
   return (
-    <Block safe marginTop={sizes.md}>
+    <Block safe marginTop={sizes.s}>
       <Block
         scroll
         paddingHorizontal={sizes.s}
@@ -52,23 +52,7 @@ const Profile = () => {
             paddingBottom={sizes.l}
             radius={sizes.cardRadius}
             source={assets.background}>
-            <Button
-              row
-              flex={0}
-              justify="flex-start"
-              onPress={() => navigation.goBack()}>
-              <Image
-                radius={0}
-                width={10}
-                height={18}
-                color={colors.white}
-                source={assets.arrow}
-                transform={[{rotate: '180deg'}]}
-              />
-              <Text p white marginLeft={sizes.s}>
-                {t('profile.title')}
-              </Text>
-            </Button>
+            
             <Block flex={0} align="center">
               <Image
                 width={64}
@@ -80,7 +64,7 @@ const Profile = () => {
                 {user?.name}
               </Text>
               <Text p center white>
-                {user?.department}
+                {user?.rank}
               </Text>
               <Block row marginVertical={sizes.m}>
                 <Button

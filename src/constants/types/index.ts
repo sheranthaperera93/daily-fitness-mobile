@@ -1,6 +1,6 @@
 import i18n from 'i18n-js';
-import {ImageSourcePropType} from 'react-native';
-import {ITheme} from './theme';
+import { ImageSourcePropType } from 'react-native';
+import { ITheme } from './theme';
 
 export * from './components';
 export * from './theme';
@@ -8,11 +8,19 @@ export * from './theme';
 export interface IUser {
   id: number | string;
   name?: string;
-  department?: string;
+  rank?: string;
   avatar?: string;
-  stats?: {posts?: number; followers?: number; following?: number};
-  social?: {twitter?: string; dribbble?: string};
+  stats?: { posts?: number; followers?: number; following?: number };
+  social?: { twitter?: string; dribbble?: string };
   about?: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  isEmailVerified?: boolean;
+  type?: number;
+  role?: number | string;
+  accessToken: string;
+  refreshToken: string;
 }
 
 export interface ICategory {
@@ -24,7 +32,7 @@ export interface IArticleOptions {
   title?: string;
   description?: string;
   type?: 'room' | 'apartment' | 'house'; // private room | entire apartment | entire house
-  sleeping?: {total?: number; type?: 'sofa' | 'bed'};
+  sleeping?: { total?: number; type?: 'sofa' | 'bed' };
   guests?: number;
   price?: number;
   user?: IUser;
@@ -132,11 +140,22 @@ export interface INotification {
   business?: boolean;
   createdAt?: number | Date;
   type:
-    | 'document'
-    | 'documentation'
-    | 'payment'
-    | 'notification'
-    | 'profile'
-    | 'extras'
-    | 'office';
+  | 'document'
+  | 'documentation'
+  | 'payment'
+  | 'notification'
+  | 'profile'
+  | 'extras'
+  | 'office';
+}
+
+export interface IActivityOverlaySpinner {
+  id?: string;
+  isActive: boolean;
+  textColor?: string;
+  spinnerColor?: string;
+  backgroundColor?: string;
+  text?: string;
+  spinnerSize?: 'small' | 'large';
+  style?: any
 }

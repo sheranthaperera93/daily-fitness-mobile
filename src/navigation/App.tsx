@@ -3,12 +3,16 @@ import { Platform, StatusBar } from 'react-native';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
 
 import Menu from './Menu';
 import { useData, ThemeProvider, TranslationProvider } from '../hooks';
+import { Login, OtpVerify, Register } from '../screens';
 
 export default () => {
-  const { isDark, theme, setTheme } = useData();
+  const { isDark, theme, setTheme, user } = useData();
+
+  const Stack = createStackNavigator();
 
   /* set the status bar based on isDark constant */
   useEffect(() => {
@@ -63,9 +67,30 @@ export default () => {
     <TranslationProvider>
       <ThemeProvider theme={theme} setTheme={setTheme}>
         <NavigationContainer theme={navigationTheme} onReady={onLayoutRootView}>
-          <Menu />
+          {user ?
+            <Menu />
+            :
+            <Stack.Navigator>
+              <Stack.Screen
+                name="Login"
+                component={Login}
+                options={{ title: 'Welcome', headerShown: false }}
+              />
+              <Stack.Screen
+                name="Register"
+                component={Register}
+                options={{ title: 'Welcome', headerShown: false }}
+              />
+              <Stack.Screen
+                name="OTPVerify"
+                component={OtpVerify}
+                options={{ title: 'Verification', headerShown: false }}
+              />
+            </Stack.Navigator>
+          }
         </NavigationContainer>
       </ThemeProvider>
     </TranslationProvider>
-  );
+  )
+
 };

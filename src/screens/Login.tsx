@@ -1,11 +1,11 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/core';
 import { useData, useTheme, useTranslation } from '../hooks';
-import * as regex from '../constants/regex';
-import { Block, Button, Input, Image, Text } from '../components';
+import { Block, Button, Input, Image, Text, OverlaySpinner } from '../components';
 import * as Google from 'expo-auth-session/providers/google';
-import { googleUserInfo } from "../services/authentication";
+import { googleUserInfo, loginUser } from "../services/authentication";
+import Toast from 'react-native-toast-message';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -13,25 +13,17 @@ interface ILogin {
   email: string;
   password: string;
 }
-interface IRegistrationValidation {
-  email: boolean;
-  password: boolean;
-}
 
 const Login = () => {
-  const { isDark } = useData();
+  const { isDark, handleUser } = useData();
   const { t } = useTranslation();
-  const navigation = useNavigation();
-  const [isValid, setIsValid] = useState<IRegistrationValidation>({
-    email: false,
-    password: false,
-  });
-  const [registration, setRegistration] = useState<ILogin>({
+  const [login, setLogin] = useState<ILogin>({
     email: '',
     password: '',
   });
   const { assets, colors, gradients, sizes } = useTheme();
-
+  const [isLoading, setLoadingState] = useState(false);
+  const navigation = useNavigation();
   const [_, __, googlePromptAsync] = Google.useAuthRequest({
     expoClientId: '1047292934936-7d0n02vrd8ielmad8huiseu8r5bvcnd5.apps.googleusercontent.com',
     // iosClientId: 'GOOGLE_GUID.apps.googleusercontent.com',
@@ -39,45 +31,80 @@ const Login = () => {
     // webClientId: 'GOOGLE_GUID.apps.googleusercontent.com',
   });
 
+  // Handle form changes 
   const handleChange = useCallback(
     (value) => {
-      setRegistration((state) => ({ ...state, ...value }));
-    },
-    [setRegistration],
+      setLogin((state) => ({ ...state, ...value }));
+    }, [setLogin],
   );
 
-  const handleSignIn = useCallback(() => {
-    if (!Object.values(isValid).includes(false)) {
-      /** send/login registratin data */
-      console.log('handleSignIn', registration);
+  // Handle email password login
+  const handleSignIn = useCallback(async () => {
+    setLoadingState(true);
+    const { status, data } = await loginUser(login.email, login.password);
+    if (status === 'SUCCESS') {
+      handleUser({
+        id: data.user.id,
+        name: data.user.name,
+        avatar: data.user.pictureUrl,
+        type: data.user.type,
+        role: data.user.role,
+        firstName: data.user.firstName,
+        lastName: data.user.last_name,
+        isEmailVerified: data.user.isEmailVerified,
+        accessToken: data.tokens.access.token,
+        refreshToken: data.tokens.refresh.token
+      });
+    } else {
+      Toast.show({
+        type: 'error',
+        text1: data
+      });
     }
-  }, [isValid, registration]);
+    setLoadingState(false);
+  }, [login]);
 
-  useEffect(() => {
-    setIsValid((state) => ({
-      ...state,
-      email: regex.email.test(registration.email),
-      password: regex.password.test(registration.password),
-    }));
-  }, [registration, setIsValid]);
-
-  const googleRegister = async () => {
+  // Handle google registration
+  const handleGoogleLogin = useCallback(async () => {
     const response = await googlePromptAsync();
+    setLoadingState(true);
     if (response.type === "success") {
       const { access_token } = response.params;
-      const data = await googleUserInfo(access_token).catch(err => { console.log("Google user info error", err) });
-      if (data) {
-        // Init session and redirect to home
-        console.log("User info", data);
+      const { status, data } = await googleUserInfo(access_token, false);
+      if (status === 'SUCCESS') {
+        setLoadingState(false);
+        handleUser({
+          id: data.user.id,
+          name: data.user.name,
+          avatar: data.user.pictureUrl,
+          type: data.user.type,
+          role: data.user.role,
+          firstName: data.user.firstName,
+          lastName: data.user.last_name,
+          isEmailVerified: data.user.isEmailVerified,
+          accessToken: data.tokens.access.token,
+          refreshToken: data.tokens.refresh.token
+        });
       } else {
-        // Show error message
-        console.log("Authentication Failed");
+        setLoadingState(false);
+        Toast.show({
+          type: 'error',
+          text1: data
+        });
       }
     }
-  }
+  }, [googlePromptAsync])
 
   return (
     <Block safe marginTop={sizes.md}>
+      <OverlaySpinner
+        isActive={isLoading}
+        textColor={isDark ? 'white' : 'black'}
+        backgroundColor={isDark ? 'black' : 'white'}
+        spinnerSize="large"
+        id='LoginIndicator'
+        text='Loading...'
+      />
       <Block paddingHorizontal={sizes.s}>
         <Block flex={0} style={{ zIndex: 0 }}>
           <Image
@@ -133,7 +160,7 @@ const Login = () => {
                       color={isDark ? colors.icon : undefined}
                     />
                 </Button> */}
-                <Button outlined gray shadow={!isAndroid} onPress={() => googleRegister()}>
+                <Button outlined gray shadow={!isAndroid} onPress={handleGoogleLogin}>
                   <Image
                     source={assets.google}
                     height={sizes.m}
@@ -177,8 +204,6 @@ const Login = () => {
                   label={t('common.email')}
                   keyboardType="email-address"
                   placeholder={t('common.emailPlaceholder')}
-                  success={Boolean(registration.email && isValid.email)}
-                  danger={Boolean(registration.email && !isValid.email)}
                   onChangeText={(value) => handleChange({ email: value })}
                 />
                 <Input
@@ -188,24 +213,33 @@ const Login = () => {
                   label={t('common.password')}
                   placeholder={t('common.passwordPlaceholder')}
                   onChangeText={(value) => handleChange({ password: value })}
-                  success={Boolean(registration.password && isValid.password)}
-                  danger={Boolean(registration.password && !isValid.password)}
                 />
               </Block>
               <Button
                 onPress={handleSignIn}
                 marginVertical={sizes.s}
                 marginHorizontal={sizes.sm}
-                gradient={gradients.primary}
-                disabled={Object.values(isValid).includes(false)}>
+                gradient={gradients.primary}>
                 <Text bold white transform="uppercase">
                   {t('common.signin')}
+                </Text>
+              </Button>
+              <Button
+                primary
+                outlined
+                shadow={!isAndroid}
+                marginVertical={sizes.s}
+                marginHorizontal={sizes.sm}
+                onPress={() => navigation.navigate('Register')}>
+                <Text bold primary transform="uppercase">
+                  {t('common.signup')}
                 </Text>
               </Button>
             </Block>
           </Block>
         </Block>
       </Block>
+      <Toast position='top' />
     </Block>
   );
 };
