@@ -9,6 +9,7 @@ import Image from './Image';
 import Article from './Article';
 import Product from './Product';
 import OverlaySpinner from './OverlaySpinner';
+import Workout from './Workout'
 
 export {
   Block,
@@ -21,5 +22,6 @@ export {
   Article,
   Product,
   Modal,
-  OverlaySpinner
+  OverlaySpinner,
+  Workout
 };

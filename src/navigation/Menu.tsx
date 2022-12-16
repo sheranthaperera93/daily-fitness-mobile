@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, Linking, StyleSheet, View } from 'react-native';
-import { Root, Popup } from 'react-native-popup-confirm-toast'
+import { Animated, StyleSheet } from 'react-native';
+import { Popup, Root } from 'react-native-popup-confirm-toast'
 
 import {
   useIsDrawerOpen,
@@ -71,7 +71,7 @@ const DrawerContent = (
 ) => {
   const { navigation } = props;
   const { t } = useTranslation();
-  const { isDark, handleIsDark, handleLogout } = useData();
+  const { isDark, handleIsDark, handleUser } = useData();
   const [active, setActive] = useState('Home');
   const { assets, colors, gradients, sizes } = useTheme();
   const labelColor = colors.text;
@@ -87,6 +87,7 @@ const DrawerContent = (
   // screen list for Drawer menu
   const screens = [
     { name: t('screens.home'), to: 'Home', icon: assets.home },
+    { name: t('screens.workouts'), to: 'Workouts', icon: assets.components },
     // {name: t('screens.components'), to: 'Components', icon: assets.components},
     // {name: t('screens.articles'), to: 'Articles', icon: assets.document},
     // {name: t('screens.rental'), to: 'Pro', icon: assets.rental},
@@ -97,24 +98,23 @@ const DrawerContent = (
     // {name: t('screens.extra'), to: 'Pro', icon: assets.extras},
   ];
 
-  // const handleLogout = () => {
-  //   Popup.show({
-  //     type: 'confirm',
-  //     title: 'Logout Confirmation!',
-  //     textBody: 'Are you sure you want to logout?',
-  //     buttonText: 'Confirm',
-  //     confirmText: 'Cancel',
-  //     callback: () => {
-  //       Popup.hide();
-  //       navigation.closeDrawer();
-  //       handleUser();
-  //       navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
-  //     },
-  //     cancelCallback: () => {
-  //       Popup.hide();
-  //     },
-  //   })
-  // }
+  const handleLogout = useCallback(() => {
+    Popup.show({
+      type: 'confirm',
+      title: 'Logout Confirmation!',
+      textBody: 'Are you sure you want to logout?',
+      buttonText: 'Confirm',
+      confirmText: 'Cancel',
+      callback: () => {
+        Popup.hide();
+        handleUser();
+        navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+      },
+      cancelCallback: () => {
+        Popup.hide();
+      },
+    })
+  }, [navigation]);
 
   return (
     <DrawerContentScrollView
@@ -191,7 +191,7 @@ const DrawerContent = (
           justify="flex-start"
           marginTop={sizes.sm}
           marginBottom={sizes.s}
-          onPress={() => handleLogout(navigation)}>
+          onPress={() => { handleLogout() }}>
           <Block
             flex={0}
             radius={6}

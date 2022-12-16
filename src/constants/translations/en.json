@@ -63,6 +63,7 @@
   "logout": "Logout",
   "screens": {
     "home": "Home",
+    "workouts": "Workouts",
     "components": "Components",
     "articles": "Articles",
     "rental": "Rental",
@@ -73,7 +74,8 @@
     "extra": "Extra - Automotive"
   },
   "navigation": {
-    "home": "Workouts",
+    "home": "Home",
+    "workouts": "Workouts",
     "components": "Components",
     "articles": "Soft UI",
     "rentals": "Soft UI",

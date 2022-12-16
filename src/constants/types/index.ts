@@ -94,6 +94,9 @@ export interface IUseData {
   notifications: INotification[];
   handleNotifications: (data?: INotification[]) => void;
   handleLogout: (data?: DrawerNavigationHelpers) => void;
+  setWorkouts: (data?: IWorkout[]) => void;
+  workouts: IWorkout[];
+  workout: IWorkout;
 }
 
 export interface ITranslate {
@@ -160,4 +163,12 @@ export interface IActivityOverlaySpinner {
   text?: string;
   spinnerSize?: 'small' | 'large';
   style?: any
+}
+
+export interface IWorkout {
+  id: string;
+  name: string;
+  type: 'vertical' | 'horizontal';
+  category: string;
+  pictureUrl: string;
 }
