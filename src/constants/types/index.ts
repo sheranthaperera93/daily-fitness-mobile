@@ -1,3 +1,4 @@
+import { DrawerNavigationHelpers } from '@react-navigation/drawer/lib/typescript/src/types';
 import i18n from 'i18n-js';
 import { ImageSourcePropType } from 'react-native';
 import { ITheme } from './theme';
@@ -92,6 +93,7 @@ export interface IUseData {
   handleArticle: (data?: IArticle) => void;
   notifications: INotification[];
   handleNotifications: (data?: INotification[]) => void;
+  handleLogout: (data?: DrawerNavigationHelpers) => void;
 }
 
 export interface ITranslate {

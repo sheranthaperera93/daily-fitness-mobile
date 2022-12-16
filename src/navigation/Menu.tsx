@@ -10,11 +10,15 @@ import {
   DrawerContentScrollView,
 } from '@react-navigation/drawer';
 
+import { createStackNavigator } from '@react-navigation/stack';
+
 import Screens from './Screens';
 import { Block, Text, Switch, Button, Image } from '../components';
 import { useData, useTheme, useTranslation } from '../hooks';
+import { Login, OtpVerify, Register } from '../screens';
 
 const Drawer = createDrawerNavigator();
+const Stack = createStackNavigator();
 
 /* drawer menu screens navigation */
 const ScreensStack = () => {
@@ -67,7 +71,7 @@ const DrawerContent = (
 ) => {
   const { navigation } = props;
   const { t } = useTranslation();
-  const { isDark, handleIsDark, handleUser } = useData();
+  const { isDark, handleIsDark, handleLogout } = useData();
   const [active, setActive] = useState('Home');
   const { assets, colors, gradients, sizes } = useTheme();
   const labelColor = colors.text;
@@ -93,25 +97,24 @@ const DrawerContent = (
     // {name: t('screens.extra'), to: 'Pro', icon: assets.extras},
   ];
 
-  const handleLogout = () => {
-    Popup.show({
-      type: 'confirm',
-      title: 'Logout Confirmation!',
-      textBody: 'Are you sure you want to logout?',
-      buttonText: 'Confirm',
-      confirmText: 'Cancel',
-      callback: () => {
-        Popup.hide();
-        navigation.closeDrawer();
-        handleUser();
-      },
-      cancelCallback: () => {
-        Popup.hide();
-      },
-    })
-  }
-
-
+  // const handleLogout = () => {
+  //   Popup.show({
+  //     type: 'confirm',
+  //     title: 'Logout Confirmation!',
+  //     textBody: 'Are you sure you want to logout?',
+  //     buttonText: 'Confirm',
+  //     confirmText: 'Cancel',
+  //     callback: () => {
+  //       Popup.hide();
+  //       navigation.closeDrawer();
+  //       handleUser();
+  //       navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+  //     },
+  //     cancelCallback: () => {
+  //       Popup.hide();
+  //     },
+  //   })
+  // }
 
   return (
     <DrawerContentScrollView
@@ -188,7 +191,7 @@ const DrawerContent = (
           justify="flex-start"
           marginTop={sizes.sm}
           marginBottom={sizes.s}
-          onPress={() => handleLogout()}>
+          onPress={() => handleLogout(navigation)}>
           <Block
             flex={0}
             radius={6}
@@ -219,23 +222,52 @@ const DrawerContent = (
 export default () => {
   const { gradients, colors, } = useTheme();
 
+  const MenuDrawer = () => {
+    return (
+      <Root>
+        <Block gradient={gradients.dark}>
+          <Drawer.Navigator
+            drawerType="slide"
+            overlayColor="transparent"
+            sceneContainerStyle={{ backgroundColor: colors.background }}
+            drawerContent={(props) => <DrawerContent {...props} />}
+            initialRouteName="Home"
+            drawerStyle={{
+              flex: 1,
+              width: '60%',
+              borderRightWidth: 0,
+              backgroundColor: colors.background,
+            }}>
+            <Drawer.Screen name="Screens" component={ScreensStack} />
+          </Drawer.Navigator>
+        </Block>
+      </Root>
+    )
+  }
+
   return (
-    <Root>
-      <Block gradient={gradients.dark}>
-        <Drawer.Navigator
-          drawerType="slide"
-          overlayColor="transparent"
-          sceneContainerStyle={{ backgroundColor: colors.background }}
-          drawerContent={(props) => <DrawerContent {...props} />}
-          drawerStyle={{
-            flex: 1,
-            width: '60%',
-            borderRightWidth: 0,
-            backgroundColor: colors.background,
-          }}>
-          <Drawer.Screen name="Screens" component={ScreensStack} />
-        </Drawer.Navigator>
-      </Block>
-    </Root>
-  );
+    <Stack.Navigator>
+      <Stack.Screen
+        name="Drawer"
+        component={MenuDrawer}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Login"
+        component={Login}
+        options={{ title: 'Welcome', headerShown: false }}
+      />
+      <Stack.Screen
+        name="Register"
+        component={Register}
+        options={{ title: 'Welcome', headerShown: false }}
+      />
+      <Stack.Screen
+        name="OTPVerify"
+        component={OtpVerify}
+        options={{ title: 'Verification', headerShown: false }}
+      />
+    </Stack.Navigator>
+  )
+
 };

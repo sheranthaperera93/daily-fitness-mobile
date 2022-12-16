@@ -55,6 +55,7 @@ const Login = () => {
         accessToken: data.tokens.access.token,
         refreshToken: data.tokens.refresh.token
       });
+      navigation.reset({index: 0, routes: [{name: "Drawer"}]})
     } else {
       Toast.show({
         type: 'error',
@@ -85,6 +86,7 @@ const Login = () => {
           accessToken: data.tokens.access.token,
           refreshToken: data.tokens.refresh.token
         });
+        navigation.reset({index: 0, routes: [{name: "Drawer"}]})
       } else {
         setLoadingState(false);
         Toast.show({
@@ -93,7 +95,7 @@ const Login = () => {
         });
       }
     }
-  }, [googlePromptAsync])
+  }, [googlePromptAsync, navigation])
 
   return (
     <Block safe marginTop={sizes.md}>

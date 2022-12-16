@@ -17,6 +17,7 @@ import {
   ARTICLES,
 } from '../constants/mocks';
 import { light, dark } from '../constants';
+import { Popup } from 'react-native-popup-confirm-toast';
 
 export const DataContext = React.createContext({});
 
@@ -53,6 +54,26 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
     [setIsDark],
   );
 
+  // Handle Logout
+  const handleLogout = useCallback((navigation) => {
+    Popup.show({
+      type: 'confirm',
+      title: 'Logout Confirmation!',
+      textBody: 'Are you sure you want to logout?',
+      buttonText: 'Confirm',
+      confirmText: 'Cancel',
+      callback: () => {
+        Popup.hide();
+        navigation.closeDrawer();
+        handleUser(null);
+        navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+      },
+      cancelCallback: () => {
+        Popup.hide();
+      },
+    })
+  }, [])
+
   // handle users / profiles
   const handleUsers = useCallback(
     (payload: IUser[]) => {
@@ -66,7 +87,7 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
 
   // handle user
   const handleUser = useCallback(
-    async (payload: IUser) => {
+    async (payload: IUser | null) => {
       // set user / compare if has updated
       if (!payload) {
         await Storage.removeItem('user');
@@ -135,6 +156,7 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
     setArticles,
     article,
     handleArticle,
+    handleLogout,
   };
 
   return (

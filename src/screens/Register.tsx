@@ -105,6 +105,7 @@ const Register = () => {
           accessToken: resp.data.tokens.access.token,
           refreshToken: resp.data.tokens.refresh.token
         });
+        navigation.reset({ index: 0, routes: [{ name: "Drawer" }] })
       } else {
         Toast.show({
           type: 'error',

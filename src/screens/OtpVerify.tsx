@@ -50,6 +50,7 @@ const OtpVerify = (params: any) => {
                 accessToken: resp.data.tokens.access.token,
                 refreshToken: resp.data.tokens.refresh.token
             });
+            navigation.reset({index: 0, routes: [{name: "Drawer"}]})
         } else {
             setLoadingState(false);
             Toast.show({
